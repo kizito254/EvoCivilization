@@ -211,6 +211,8 @@ Phase 1 acceptance criteria:
 - Strategy behaviors (harvest / expand / militarize)
 - Reward loop from economy + diplomacy + survival signals
 - Strategy telemetry for balancing and replay analysis
+- Reinforcement learning
+- Strategy behaviors
 
 ### Phase 4 (4 weeks)
 - Interactive map

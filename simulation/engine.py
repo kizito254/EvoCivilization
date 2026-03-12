@@ -9,6 +9,10 @@ from .world import World, WorldGenerator
 
 STRATEGIES = ("harvest", "expand", "militarize")
 
+from .civilization import CivilizationManager
+from .models import Agent, RESOURCE_TYPES
+from .world import World, WorldGenerator
+
 
 @dataclass
 class SimulationConfig:
@@ -21,6 +25,8 @@ class SimulationConfig:
     civilization_count: int = 3
     enable_phase3: bool = False
     strategy_learning_rate: float = 0.2
+    phase2_enabled: bool = False
+    civilization_count: int = 4
 
 
 @dataclass
@@ -35,6 +41,11 @@ class TickMetrics:
     alliances: int
     wars: int
     avg_strategy_confidence: float
+    stockpile: Dict[str, int]
+    civilization_population: int = 0
+    avg_technology_level: float = 0.0
+    alliances: int = 0
+    conflicts: int = 0
 
 
 @dataclass
@@ -45,6 +56,7 @@ class SimulationResult:
 
 class Simulation:
     """Phase 1+2+3 simulation: economy, population, technology, diplomacy, adaptive strategy behavior."""
+    """Phase 1 simulation foundation: world, agents, resource economy, clock, telemetry."""
 
     def __init__(self, config: SimulationConfig) -> None:
         self.config = config
@@ -68,6 +80,13 @@ class Simulation:
 
     def _init_strategy_weights(self) -> Dict[int, Dict[str, float]]:
         return {c.id: {"harvest": 1.0, "expand": 1.0, "militarize": 1.0} for c in self.civilizations}
+        self.agents: List[Agent] = self._spawn_agents(config.initial_agents)
+        self.stockpile: Dict[str, int] = {r: 0 for r in RESOURCE_TYPES}
+        self.civilizations = CivilizationManager(
+            seed=config.seed,
+            civilization_count=config.civilization_count,
+            initial_population=config.initial_agents,
+        ) if config.phase2_enabled else None
 
     def _spawn_agents(self, count: int) -> List[Agent]:
         agents: List[Agent] = []
@@ -93,6 +112,23 @@ class Simulation:
                 self._phase3_strategy_update()
             alive = sum(1 for a in self.agents if a.alive)
             alliances, wars = self._relation_counts()
+            alive = sum(1 for a in self.agents if a.alive)
+            alliances = 0
+            conflicts = 0
+            civilization_population = 0
+            avg_technology_level = 0.0
+
+            if self.civilizations is not None:
+                snapshot = self.civilizations.update(
+                    stockpile_food=self.stockpile["food"],
+                    alive_agents=alive,
+                    deaths=deaths,
+                )
+                alliances = snapshot.alliances
+                conflicts = snapshot.conflicts
+                civilization_population = self.civilizations.total_population
+                avg_technology_level = self.civilizations.average_technology_level
+
             result.metrics.append(
                 TickMetrics(
                     tick=tick,
@@ -105,6 +141,11 @@ class Simulation:
                     alliances=alliances,
                     wars=wars,
                     avg_strategy_confidence=self._avg_strategy_confidence(),
+                    stockpile=self.stockpile.copy(),
+                    civilization_population=civilization_population,
+                    avg_technology_level=avg_technology_level,
+                    alliances=alliances,
+                    conflicts=conflicts,
                 )
             )
         return result
@@ -134,6 +175,7 @@ class Simulation:
             agent.hunger = max(0, agent.hunger - 45)
             return
 
+        # fallback from inventory
         if agent.inventory["food"] > 0:
             agent.inventory["food"] -= 1
             agent.hunger = max(0, agent.hunger - 40)
@@ -160,6 +202,11 @@ class Simulation:
         # militarize strategy: lower gather, more positioning (movement)
         if strategy == "militarize" and self.rng.random() < 0.7:
             self._move(agent)
+            return
+
+
+        if agent.hunger > 55:
+            self._gather(agent, tile, "food", amount=2)
             return
 
         richest = max(RESOURCE_TYPES, key=lambda r: tile.resources.get(r, 0))
