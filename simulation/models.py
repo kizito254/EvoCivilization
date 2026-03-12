@@ -71,4 +71,7 @@ class DiplomaticRelation:
         return "neutral"
 
 
+    inventory: Dict[str, int] = field(default_factory=lambda: {r: 0 for r in RESOURCE_TYPES})
+
+
 Position = Tuple[int, int]
