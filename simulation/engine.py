@@ -4,6 +4,13 @@ import random
 from dataclasses import dataclass, field
 from typing import Dict, List
 
+from .models import (
+    Agent,
+    Civilization,
+    DiplomaticRelation,
+    RESOURCE_TYPES,
+    TECH_LEVELS,
+)
 from .models import Agent, Civilization, DiplomaticRelation, RESOURCE_TYPES, TECH_LEVELS
 from .world import World, WorldGenerator
 
@@ -40,6 +47,7 @@ class TickMetrics:
     avg_tech_level: float
     alliances: int
     wars: int
+    avg_strategy_adaptations: float
     avg_strategy_confidence: float
     stockpile: Dict[str, int]
     civilization_population: int = 0
@@ -55,6 +63,7 @@ class SimulationResult:
 
 
 class Simulation:
+    """Phase 1-3 simulation: economy core + population/tech/diplomacy + adaptive strategy behaviors."""
     """Phase 1+2+3 simulation: economy, population, technology, diplomacy, adaptive strategy behavior."""
     """Phase 1 simulation foundation: world, agents, resource economy, clock, telemetry."""
 
@@ -107,6 +116,14 @@ class Simulation:
         result = SimulationResult(config=self.config)
         for tick in range(1, self.config.ticks + 1):
             deaths = self._step()
+            births = 0
+            if self.config.enable_phase2:
+                births = self._phase2_update(tick)
+            if self.config.enable_phase3:
+                self._phase3_update(tick)
+
+            alive = sum(1 for a in self.agents if a.alive)
+            alliances, wars = self._relation_counts()
             births = self._phase2_update(tick) if (self.config.enable_phase2 or self.config.enable_phase3) else 0
             if self.config.enable_phase3:
                 self._phase3_strategy_update()
@@ -140,6 +157,7 @@ class Simulation:
                     avg_tech_level=self._avg_tech_level(),
                     alliances=alliances,
                     wars=wars,
+                    avg_strategy_adaptations=self._avg_strategy_adaptations(),
                     avg_strategy_confidence=self._avg_strategy_confidence(),
                     stockpile=self.stockpile.copy(),
                     civilization_population=civilization_population,
@@ -185,6 +203,16 @@ class Simulation:
 
     def _act(self, agent: Agent) -> None:
         tile = self.world.tile_at(agent.x, agent.y)
+        civ = self.civilizations[agent.civilization_id]
+
+        if self.config.enable_phase3:
+            action = self._choose_strategy_action(civ)
+            if action == "defend":
+                agent.safety = min(100, agent.safety + 2)
+                return
+            if action == "explore":
+                self._move(agent)
+                return
         strategy = self._select_strategy(agent.civilization_id)
 
         if agent.hunger > 55 or strategy == "harvest":
@@ -216,6 +244,13 @@ class Simulation:
 
         self._move(agent)
 
+    def _choose_strategy_action(self, civ: Civilization) -> str:
+        roll = self.rng.random()
+        if roll < civ.strategy.explore_weight:
+            return "explore"
+        if roll < civ.strategy.explore_weight + civ.strategy.gather_weight:
+            return "gather"
+        return "defend"
     def _select_strategy(self, civ_id: int) -> str:
         weights = self.strategy_weights[civ_id]
         total = sum(weights.values())
@@ -251,6 +286,42 @@ class Simulation:
         self._diplomacy_update()
         return births
 
+    def _phase3_update(self, tick: int) -> None:
+        if tick % 5 != 0:
+            return
+
+        civ_alive = self._alive_per_civ()
+        for civ in self.civilizations:
+            alive = civ_alive.get(civ.id, 0)
+            food_reward = min(1.0, self.stockpile["food"] / 2000)
+            survival_reward = min(1.0, alive / max(1, self.config.initial_agents // len(self.civilizations)))
+            risk_penalty = 0.2 if self._civ_in_war(civ.id) else 0.0
+            reward = max(0.0, (0.55 * food_reward + 0.45 * survival_reward) - risk_penalty)
+
+            # lightweight policy-gradient-like update
+            civ.strategy.gather_weight += 0.08 * (reward - 0.5)
+            civ.strategy.explore_weight += 0.05 * (0.6 - reward)
+            civ.strategy.defend_weight += 0.06 * (risk_penalty + 0.2 - reward / 2)
+            self._normalize_strategy(civ)
+            civ.strategy.adaptations += 1
+
+    def _normalize_strategy(self, civ: Civilization) -> None:
+        civ.strategy.explore_weight = max(0.05, min(0.9, civ.strategy.explore_weight))
+        civ.strategy.gather_weight = max(0.05, min(0.9, civ.strategy.gather_weight))
+        civ.strategy.defend_weight = max(0.05, min(0.9, civ.strategy.defend_weight))
+        s = civ.strategy.explore_weight + civ.strategy.gather_weight + civ.strategy.defend_weight
+        civ.strategy.explore_weight /= s
+        civ.strategy.gather_weight /= s
+        civ.strategy.defend_weight /= s
+
+    def _civ_in_war(self, civ_id: int) -> bool:
+        for rel in self.relations.values():
+            if rel.status != "war":
+                continue
+            if rel.civ_a == civ_id or rel.civ_b == civ_id:
+                return True
+        return False
+
     def _population_growth(self, tick: int) -> int:
         if tick % 10 != 0:
             return 0
@@ -260,6 +331,9 @@ class Simulation:
         for civ_id, alive in civ_alive.items():
             if alive <= 0:
                 continue
+            if self.stockpile["food"] < 5:
+                continue
+            self.stockpile["food"] -= 5
 
             grow_cost = 4 if self._dominant_strategy(civ_id) == "expand" else 5
             if self.stockpile["food"] < grow_cost:
@@ -282,6 +356,9 @@ class Simulation:
     def _technology_progression(self) -> None:
         civ_alive = self._alive_per_civ()
         for civ in self.civilizations:
+            points = civ_alive.get(civ.id, 0) // 25 + self.stockpile["wood"] // 100 + self.stockpile["stone"] // 100
+            if self.config.enable_phase3:
+                points += int(3 * civ.strategy.gather_weight)
             strategy_bonus = 2 if self._dominant_strategy(civ.id) == "harvest" else 0
             points = (
                 civ_alive.get(civ.id, 0) // 25
@@ -303,6 +380,10 @@ class Simulation:
             b_pop = civ_alive.get(rel.civ_b, 0)
             power_delta = (a_pop - b_pop) // 10
             resource_pressure = -2 if self.stockpile["food"] < 100 else 1
+            random_drift = self.rng.randint(-2, 2)
+            rel.score += power_delta + resource_pressure + random_drift
+            rel.score = max(-100, min(100, rel.score))
+
             stance_delta = 0
             if self._dominant_strategy(rel.civ_a) == "militarize" or self._dominant_strategy(rel.civ_b) == "militarize":
                 stance_delta -= 1
@@ -352,6 +433,11 @@ class Simulation:
         if not self.civilizations:
             return 0.0
         return sum(c.tech_level_idx for c in self.civilizations) / len(self.civilizations)
+
+    def _avg_strategy_adaptations(self) -> float:
+        if not self.civilizations:
+            return 0.0
+        return sum(c.strategy.adaptations for c in self.civilizations) / len(self.civilizations)
 
     def _relation_counts(self) -> tuple[int, int]:
         alliances = sum(1 for rel in self.relations.values() if rel.status == "alliance")

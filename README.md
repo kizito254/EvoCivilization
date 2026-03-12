@@ -269,6 +269,11 @@ python3 run_phase1.py --phase2 --civilizations 3 --agents 500 --ticks 80
 
 ## Phase 3 Implementation (Current)
 
+Added an optional Phase 3 adaptive strategy layer (enabled with `--phase3`) that includes:
+
+- **Adaptive strategy profiles per civilization** (explore/gather/defend weights).
+- **Learning-style updates** every few ticks based on food pressure, survival, and war risk.
+- **Strategy telemetry** via `avg_strategy_adaptations` in per-tick metrics.
 Added an optional Phase 3 scaffold (enabled with `--phase3`) focused on adaptive strategy behavior:
 
 - **Adaptive strategy policies:** each civilization maintains weighted preferences for `harvest`, `expand`, and `militarize`.
@@ -278,6 +283,22 @@ Added an optional Phase 3 scaffold (enabled with `--phase3`) focused on adaptive
 ### Run with Phase 3
 
 ```bash
+python3 run_phase1.py --phase3 --civilizations 4 --agents 500 --ticks 80
+```
+
+## Phase 4 Implementation (Current)
+
+Added an optional Phase 4 visualization layer (enabled with `--phase4`) that includes:
+
+- **Interactive map snapshot** rendered as ASCII terrain/agent overlay.
+- **Statistics dashboard** exported as a standalone HTML report.
+- **Timeline table** for per-tick simulation metrics (population, resources, diplomacy, strategy adaptation).
+
+### Run with Phase 4
+
+```bash
+python3 run_phase1.py --phase4 --phase3 --civilizations 4 --agents 500 --ticks 80
+```
 python3 run_phase1.py --phase3 --civilizations 3 --agents 500 --ticks 120 --learning-rate 0.2
 ```
 Phase 2 systems are now integrated into the simulation engine behind `phase2_enabled`:

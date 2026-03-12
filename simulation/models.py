@@ -36,11 +36,20 @@ class Agent:
 
 
 @dataclass
+class StrategyProfile:
+    explore_weight: float = 0.34
+    gather_weight: float = 0.33
+    defend_weight: float = 0.33
+    adaptations: int = 0
+
+
+@dataclass
 class Civilization:
     id: int
     name: str
     tech_points: int = 0
     tech_level_idx: int = 0
+    strategy: StrategyProfile = field(default_factory=StrategyProfile)
 
     @property
     def tech_level(self) -> str:
