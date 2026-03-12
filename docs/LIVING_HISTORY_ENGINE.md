@@ -85,3 +85,17 @@ Year 112: The Kingdom of Lythia unites three tribes.
 Year 340: Trade routes emerge between Lythia and Aralon.
 Year 511: The First Continental War begins.
 ```
+
+---
+
+## Current Implementation Snapshot
+
+This repository now includes an implemented MVP scaffold for the Living History Engine:
+
+- `simulation/history.py` provides event generation from simulation metrics.
+- SQLite event storage via `write_history_db`.
+- Templated narrative text generation via `render_narrative`.
+- Markdown timeline export via `write_history_book`.
+- CLI integration via `run_phase1.py --history`.
+
+This is a deterministic template-based narrative baseline intended to be upgraded later with richer prompt-driven generation.

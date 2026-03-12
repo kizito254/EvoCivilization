@@ -6,15 +6,19 @@ import argparse
 from simulation import (
     Simulation,
     SimulationConfig,
+    generate_history_events,
     render_ascii_map,
     run_scaling_benchmark,
     write_benchmark_csv,
     write_dashboard_html,
+    write_history_book,
+    write_history_db,
     write_metrics_csv,
 )
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Run EvoCivilization simulation (Phase 1 + optional Phase 2/3/4/5 + history systems).")
     parser = argparse.ArgumentParser(description="Run EvoCivilization simulation (Phase 1 + optional Phase 2/3/4/5 systems).")
 from simulation import Simulation, SimulationConfig, render_ascii_map, write_dashboard_html, write_metrics_csv
 
@@ -36,6 +40,7 @@ def main() -> None:
     parser.add_argument("--phase3", action="store_true", help="Enable Phase 3 adaptive strategy behavior updates")
     parser.add_argument("--phase4", action="store_true", help="Enable Phase 4 dashboard/map export")
     parser.add_argument("--phase5", action="store_true", help="Enable Phase 5 performance mode optimizations")
+    parser.add_argument("--history", action="store_true", help="Enable Living History export (SQLite + markdown)")
     parser.add_argument("--high-pop", action="store_true", help="Enable high-population fidelity tradeoffs")
     parser.add_argument("--benchmark", action="store_true", help="Run Phase 5 scaling benchmark and export CSV")
     parser.add_argument("--benchmark-counts", type=str, default="1000,5000,10000")
@@ -43,6 +48,8 @@ def main() -> None:
     parser.add_argument("--metrics", type=str, default="artifacts/simulation_metrics.csv")
     parser.add_argument("--dashboard", type=str, default="artifacts/phase4_dashboard.html")
     parser.add_argument("--benchmark-out", type=str, default="artifacts/phase5_benchmark.csv")
+    parser.add_argument("--history-db", type=str, default="artifacts/history/events.db")
+    parser.add_argument("--history-book", type=str, default="artifacts/history/history_book.md")
     args = parser.parse_args()
 
     if args.benchmark:
@@ -114,6 +121,12 @@ def main() -> None:
         dashboard_path = write_dashboard_html(result, ascii_map, args.dashboard)
         print(f"Dashboard written: {dashboard_path}")
 
+    if args.history:
+        events = generate_history_events(result, simulation.civilizations)
+        db_path = write_history_db(events, args.history_db)
+        book_path = write_history_book(events, args.history_book)
+        print(f"History DB written: {db_path}")
+        print(f"History book written: {book_path}")
         f"strategy_confidence={final.avg_strategy_confidence:.3f}"
     )
     print(f"Simulation complete: tick={final.tick} alive={final.alive_population} deaths={final.deaths}")

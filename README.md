@@ -320,6 +320,26 @@ python3 run_phase1.py --phase5 --high-pop --phase3 --agents 10000 --ticks 20 --c
 ```bash
 python3 run_phase1.py --benchmark --ticks 20 --benchmark-counts 1000,5000,10000
 ```
+
+## Living History Engine MVP (Implemented)
+
+Implemented a first-pass Living History pipeline with:
+
+- **Event synthesis** from simulation outcomes (founding, growth, decline, tech milestones, alliances, wars).
+- **History database export** to SQLite (`events` table).
+- **Narrative generation** with templated natural-language timeline lines.
+- **History book export** to markdown.
+
+### Run with history export
+
+```bash
+python3 run_phase1.py --history --phase3 --phase5 --high-pop --agents 5000 --ticks 40
+```
+
+Default history outputs:
+
+- `artifacts/history/events.db`
+- `artifacts/history/history_book.md`
 python3 run_phase1.py --phase3 --civilizations 3 --agents 500 --ticks 120 --learning-rate 0.2
 ```
 Phase 2 systems are now integrated into the simulation engine behind `phase2_enabled`:
