@@ -255,6 +255,31 @@ This writes metrics to `artifacts/phase1_metrics.csv` by default.
 
 ## Phase 2 Implementation (Current)
 
+Added an optional Phase 2 scaffold (enabled with `--phase2`) that includes:
+
+- **Population growth:** periodic births per civilization when food supports expansion.
+- **Technology progression:** civilization tech points and era advancement based on population/resources.
+- **Diplomacy:** pairwise relation scores that evolve into neutral/alliance/war states.
+
+### Run with Phase 2
+
+```bash
+python3 run_phase1.py --phase2 --civilizations 3 --agents 500 --ticks 80
+```
+
+## Phase 3 Implementation (Current)
+
+Added an optional Phase 3 scaffold (enabled with `--phase3`) focused on adaptive strategy behavior:
+
+- **Adaptive strategy policies:** each civilization maintains weighted preferences for `harvest`, `expand`, and `militarize`.
+- **Reward-driven updates:** strategy weights are updated each tick using food pressure, diplomacy outcomes, and tech progress signals.
+- **Behavior coupling:** dominant strategy influences gather intensity, growth cost, and diplomacy drift.
+
+### Run with Phase 3
+
+```bash
+python3 run_phase1.py --phase3 --civilizations 3 --agents 500 --ticks 120 --learning-rate 0.2
+```
 Phase 2 systems are now integrated into the simulation engine behind `phase2_enabled`:
 
 - **Population growth model** across civilizations (`simulation/civilization.py`).

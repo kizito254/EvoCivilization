@@ -6,6 +6,7 @@ from typing import Dict, Tuple
 
 
 RESOURCE_TYPES = ("food", "wood", "stone")
+TECH_LEVELS = ("primitive", "agricultural", "kingdom", "industrial", "space")
 
 
 class Biome(str, Enum):
@@ -30,6 +31,37 @@ class Agent:
     hunger: int = 0
     safety: int = 100
     alive: bool = True
+    civilization_id: int = 0
+    inventory: Dict[str, int] = field(default_factory=lambda: {r: 0 for r in RESOURCE_TYPES})
+
+
+@dataclass
+class Civilization:
+    id: int
+    name: str
+    tech_points: int = 0
+    tech_level_idx: int = 0
+
+    @property
+    def tech_level(self) -> str:
+        return TECH_LEVELS[self.tech_level_idx]
+
+
+@dataclass
+class DiplomaticRelation:
+    civ_a: int
+    civ_b: int
+    score: int = 0
+
+    @property
+    def status(self) -> str:
+        if self.score >= 35:
+            return "alliance"
+        if self.score <= -35:
+            return "war"
+        return "neutral"
+
+
     inventory: Dict[str, int] = field(default_factory=lambda: {r: 0 for r in RESOURCE_TYPES})
 
 

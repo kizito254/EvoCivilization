@@ -207,6 +207,10 @@ Phase 1 acceptance criteria:
 - Population growth
 
 ### Phase 3 (8 weeks)
+- Reinforcement-learning-inspired policy adaptation
+- Strategy behaviors (harvest / expand / militarize)
+- Reward loop from economy + diplomacy + survival signals
+- Strategy telemetry for balancing and replay analysis
 - Reinforcement learning
 - Strategy behaviors
 
