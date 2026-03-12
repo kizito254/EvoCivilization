@@ -299,6 +299,27 @@ Added an optional Phase 4 visualization layer (enabled with `--phase4`) that inc
 ```bash
 python3 run_phase1.py --phase4 --phase3 --civilizations 4 --agents 500 --ticks 80
 ```
+
+## Phase 5 Implementation (Current)
+
+Added an optional Phase 5 performance layer that includes:
+
+- **Optimized tick path** (`--phase5`) that iterates only live-agent indices.
+- **High population mode** (`--high-pop`) to trade some fidelity for large-scale throughput.
+- **Per-tick performance telemetry** (`step_time_ms`, `effective_agent_updates`).
+- **Scaling benchmark utility** (`--benchmark`) for 1k/5k/10k+ population runs.
+
+### Run with Phase 5
+
+```bash
+python3 run_phase1.py --phase5 --high-pop --phase3 --agents 10000 --ticks 20 --civilizations 4
+```
+
+### Run benchmark
+
+```bash
+python3 run_phase1.py --benchmark --ticks 20 --benchmark-counts 1000,5000,10000
+```
 python3 run_phase1.py --phase3 --civilizations 3 --agents 500 --ticks 120 --learning-rate 0.2
 ```
 Phase 2 systems are now integrated into the simulation engine behind `phase2_enabled`:

@@ -237,3 +237,14 @@ Phase 1 acceptance criteria:
 - Modding pipeline
 - Planet-scale simulation
 - ML-native civilization behavior
+
+## Phase 5 Execution Snapshot (Implemented Scaffold)
+
+Current repository implementation includes an initial Phase 5 performance scaffold:
+
+- Live-agent index iteration to reduce per-tick overhead.
+- Optional high-population mode for throughput-oriented simulation runs.
+- Tick-level performance telemetry (`step_time_ms`, `effective_agent_updates`).
+- Built-in scaling benchmark runner with CSV output for population sweeps.
+
+This is a CPU-first optimization baseline intended to precede future GPU/ECS migration.

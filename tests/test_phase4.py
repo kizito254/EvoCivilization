@@ -33,6 +33,7 @@ class Phase4VisualizationTests(unittest.TestCase):
             out = write_dashboard_html(result, ascii_map, f"{tmp}/dashboard.html")
             html = out.read_text(encoding="utf-8")
 
+        self.assertIn("Phase 4", html)
         self.assertIn("Phase 4 Dashboard", html)
         self.assertIn("Timeline Metrics", html)
         self.assertIn("Interactive Map Snapshot", html)

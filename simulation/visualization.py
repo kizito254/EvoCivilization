@@ -40,6 +40,7 @@ def render_ascii_map(world: World, agents: Iterable[Agent], width: int = 48, hei
 
 
 def write_dashboard_html(result: SimulationResult, ascii_map: str, output_path: str | Path) -> Path:
+    """Write a lightweight HTML dashboard for Phase 4/5 map + simulation metrics."""
     """Write a lightweight HTML dashboard for Phase 4 map + simulation metrics."""
     out = Path(output_path)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -48,6 +49,12 @@ def write_dashboard_html(result: SimulationResult, ascii_map: str, output_path: 
         f"<tr><td>{m.tick}</td><td>{m.alive_population}</td><td>{m.deaths}</td><td>{m.births}</td>"
         f"<td>{m.stockpile['food']}</td><td>{m.stockpile['wood']}</td><td>{m.stockpile['stone']}</td>"
         f"<td>{m.avg_tech_level:.2f}</td><td>{m.alliances}</td><td>{m.wars}</td>"
+        f"<td>{m.avg_strategy_adaptations:.2f}</td><td>{m.step_time_ms:.3f}</td><td>{m.effective_agent_updates}</td></tr>"
+        for m in result.metrics
+    )
+
+    avg_ms = (sum(m.step_time_ms for m in result.metrics) / len(result.metrics)) if result.metrics else 0.0
+
         f"<td>{m.avg_strategy_adaptations:.2f}</td></tr>"
         for m in result.metrics
     )
@@ -57,6 +64,7 @@ def write_dashboard_html(result: SimulationResult, ascii_map: str, output_path: 
 <head>
   <meta charset='utf-8'>
   <meta name='viewport' content='width=device-width, initial-scale=1'>
+  <title>EvoCivilization Phase 4/5 Dashboard</title>
   <title>EvoCivilization Phase 4 Dashboard</title>
   <style>
     body {{ font-family: Arial, sans-serif; margin: 1rem 2rem; }}
@@ -64,17 +72,20 @@ def write_dashboard_html(result: SimulationResult, ascii_map: str, output_path: 
     table {{ border-collapse: collapse; width: 100%; font-size: 0.9rem; }}
     th, td {{ border: 1px solid #ccc; padding: 0.35rem 0.5rem; text-align: right; }}
     th:first-child, td:first-child {{ text-align: left; }}
+    .summary {{ display: grid; grid-template-columns: repeat(5, minmax(130px, 1fr)); gap: 0.5rem; margin-bottom: 1rem; }}
     .summary {{ display: grid; grid-template-columns: repeat(4, minmax(130px, 1fr)); gap: 0.5rem; margin-bottom: 1rem; }}
     .card {{ border: 1px solid #ddd; border-radius: 8px; padding: 0.5rem; }}
   </style>
 </head>
 <body>
+  <h1>EvoCivilization — Phase 4/5 Dashboard</h1>
   <h1>EvoCivilization — Phase 4 Dashboard</h1>
   <div class='summary'>
     <div class='card'><strong>Ticks</strong><br>{len(result.metrics)}</div>
     <div class='card'><strong>Final Population</strong><br>{result.metrics[-1].alive_population if result.metrics else 0}</div>
     <div class='card'><strong>Final Avg Tech</strong><br>{result.metrics[-1].avg_tech_level if result.metrics else 0:.2f}</div>
     <div class='card'><strong>Final Alliances/Wars</strong><br>{result.metrics[-1].alliances if result.metrics else 0}/{result.metrics[-1].wars if result.metrics else 0}</div>
+    <div class='card'><strong>Avg Step Time</strong><br>{avg_ms:.3f} ms</div>
   </div>
 
   <h2>Interactive Map Snapshot (ASCII)</h2>
@@ -85,6 +96,7 @@ def write_dashboard_html(result: SimulationResult, ascii_map: str, output_path: 
     <thead>
       <tr>
         <th>Tick</th><th>Alive</th><th>Deaths</th><th>Births</th><th>Food</th><th>Wood</th><th>Stone</th>
+        <th>AvgTech</th><th>Alliances</th><th>Wars</th><th>StrategyAdapt</th><th>StepMs</th><th>AgentUpdates</th>
         <th>AvgTech</th><th>Alliances</th><th>Wars</th><th>StrategyAdapt</th>
       </tr>
     </thead>
