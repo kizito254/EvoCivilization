@@ -28,6 +28,14 @@ def write_metrics_csv(result: SimulationResult, path: str | Path) -> Path:
                 "avg_strategy_adaptations",
                 "step_time_ms",
                 "effective_agent_updates",
+                "avg_strategy_confidence",
+                "stockpile_food",
+                "stockpile_wood",
+                "stockpile_stone",
+                "civilization_population",
+                "avg_technology_level",
+                "alliances",
+                "conflicts",
             ]
         )
         for m in result.metrics:
@@ -47,6 +55,14 @@ def write_metrics_csv(result: SimulationResult, path: str | Path) -> Path:
                     f"{m.avg_strategy_adaptations:.2f}",
                     f"{m.step_time_ms:.3f}",
                     m.effective_agent_updates,
+                    f"{m.avg_strategy_confidence:.4f}",
+                    m.stockpile["food"],
+                    m.stockpile["wood"],
+                    m.stockpile["stone"],
+                    m.civilization_population,
+                    round(m.avg_technology_level, 3),
+                    m.alliances,
+                    m.conflicts,
                 ]
             )
 
