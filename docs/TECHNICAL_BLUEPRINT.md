@@ -248,3 +248,31 @@ Current repository implementation includes an initial Phase 5 performance scaffo
 - Built-in scaling benchmark runner with CSV output for population sweeps.
 
 This is a CPU-first optimization baseline intended to precede future GPU/ECS migration.
+
+
+
+## Architecture Pictorial
+
+```mermaid
+flowchart TB
+    subgraph Core Simulation
+      WORLD[World Generation]
+      AGENTS[Agents & Needs Loop]
+      ECON[Economy Loop]
+      CIV[Civilization Systems]
+      STRAT[Adaptive Strategy]
+      WORLD --> AGENTS --> ECON --> CIV --> STRAT
+    end
+
+    subgraph Outputs
+      CSV[Telemetry CSV]
+      DASH[HTML Dashboard]
+      HISTDB[(History SQLite)]
+      BOOK[History Book Markdown]
+    end
+
+    STRAT --> CSV
+    STRAT --> DASH
+    STRAT --> HISTDB
+    HISTDB --> BOOK
+```

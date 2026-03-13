@@ -99,3 +99,21 @@ This repository now includes an implemented MVP scaffold for the Living History 
 - CLI integration via `run_phase1.py --history`.
 
 This is a deterministic template-based narrative baseline intended to be upgraded later with richer prompt-driven generation.
+
+
+
+## Timeline Pictorial
+
+```mermaid
+sequenceDiagram
+    participant Sim as Simulation Tick Loop
+    participant Gen as Event Generator
+    participant DB as SQLite events
+    participant Nar as Narrative Renderer
+    participant Book as History Book
+
+    Sim->>Gen: metrics + civ state
+    Gen->>DB: append structured event
+    Gen->>Nar: normalize event payload
+    Nar->>Book: emit timeline sentence
+```

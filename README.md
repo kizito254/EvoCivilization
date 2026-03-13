@@ -321,6 +321,56 @@ python3 run_phase1.py --phase5 --high-pop --phase3 --agents 10000 --ticks 20 --c
 python3 run_phase1.py --benchmark --ticks 20 --benchmark-counts 1000,5000,10000
 ```
 
+
+## Pictorials
+
+### System Architecture (High-Level)
+
+```mermaid
+flowchart LR
+    WG[World Generator] --> SE[Simulation Engine]
+    AI[Agent AI / Strategy] --> SE
+    ECO[Resource Economy] --> SE
+    DIP[Diplomacy] --> SE
+    TECH[Technology Progression] --> SE
+    PERF[Phase 5 Performance Mode] --> SE
+
+    SE --> TEL[Telemetry CSV]
+    SE --> HIST[Living History Engine]
+    SE --> VIS[Phase 4/5 Dashboard]
+
+    HIST --> HDB[(SQLite events.db)]
+    HIST --> HBOOK[History Book.md]
+```
+
+### Phase Progression Map
+
+```mermaid
+flowchart TD
+    P1[Phase 1
+World + Agents + Economy] --> P2[Phase 2
+Population + Tech + Diplomacy]
+    P2 --> P3[Phase 3
+Adaptive Strategy Behaviors]
+    P3 --> P4[Phase 4
+Map + Dashboard Visualization]
+    P4 --> P5[Phase 5
+High-Pop Optimization + Benchmark]
+    P5 --> LH[Living History MVP
+Events + Narrative + Exports]
+```
+
+### Living History Pipeline
+
+```mermaid
+flowchart LR
+    M[Per-tick Metrics + Civilization State] --> EG[Event Generator]
+    EG --> DB[(events table)]
+    EG --> NG[Narrative Templating]
+    NG --> BOOK[Timeline Markdown Export]
+    DB --> REPLAY[Timeline/Replay Consumers]
+```
+
 ## Living History Engine MVP (Implemented)
 
 Implemented a first-pass Living History pipeline with:
